@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using TMPro; // Make sure to include the TextMeshPro namespace
 using UnityEngine;
 
-[RequireComponent(typeof(BoundsCheck))]
+//[RequireComponent(typeof(BoundsCheck))]
 public class PowerUp : MonoBehaviour
 {
     [Header("Inscribed")]
@@ -12,7 +12,7 @@ public class PowerUp : MonoBehaviour
     [Tooltip("x holds a min value and y a max value as above")]
     public Vector2 driftMinMax = new Vector2(0.25f, 2);
     public float lifeTime = 10;
-    public float fadeTime = 4;
+    public float fadeTime = 999999;
 
     [Header("Dynamic")]
     //public eWeaponType _type; // Changed from type in the book
@@ -22,7 +22,7 @@ public class PowerUp : MonoBehaviour
     public float birthTime;
 
     private Rigidbody rigid;
-    private BoundsCheck bndCheck;
+    //private BoundsCheck bndCheck;
     private Material cubeMat;
 
     void Awake()

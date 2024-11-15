@@ -15,6 +15,7 @@ public class tankMove : MonoBehaviour
     public float fireCooldown = 0.5f;
 
     private float lastFireTime;
+    private GameObject lastTriggerGo = null;
 
     void Update()
     {
@@ -64,5 +65,27 @@ public class tankMove : MonoBehaviour
         {
             Debug.LogWarning("ProjectilePrefab or ProjectileSpawnPoint is not assigned.");
         }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        Transform rootT = other.gameObject.transform.root;
+        GameObject go = rootT.gameObject;
+
+        if (go == lastTriggerGo) return;
+        lastTriggerGo = go;
+
+        //Enemy enemy = go.GetComponent<Enemy>();
+        PowerUp pUp = go.GetComponent<PowerUp>();
+        if(pUp != null){
+            AbsorbPowerUp(pUp);
+        }
+        
+    }
+
+    public void AbsorbPowerUp(PowerUp pUp){
+        Debug.Log("Absorbed PowerUp");
+       
+        pUp.AbsorbedBy(this.gameObject);
     }
 }
