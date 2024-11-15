@@ -43,7 +43,7 @@ public class tankMove : MonoBehaviour
         }
     }
 
-    void FireProjectile()
+    public void FireProjectile()
     {
         if (projectilePrefab != null && projectileSpawnPoint != null)
         {
