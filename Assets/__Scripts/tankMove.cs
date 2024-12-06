@@ -17,6 +17,12 @@ public class tankMove : MonoBehaviour
     private float lastFireTime;
     private GameObject lastTriggerGo = null;
 
+    [Header("Map Boundaries")]
+    public float xMin = -25f; // Set based on your map size
+    public float xMax = 25f;
+    public float zMin = -25f;
+    public float zMax = 25f;
+
     void Update()
     {
         HandleMovement();
@@ -68,24 +74,43 @@ public class tankMove : MonoBehaviour
     }
 
     private void OnTriggerEnter(Collider other)
+{
+    // Check if the collided object is an EnemyProjectile
+    EnemyProjectile enemyProjectile = other.GetComponent<EnemyProjectile>();
+    if (enemyProjectile != null)
     {
-        Transform rootT = other.gameObject.transform.root;
-        GameObject go = rootT.gameObject;
-
-        if (go == lastTriggerGo) return;
-        lastTriggerGo = go;
-
-        //Enemy enemy = go.GetComponent<Enemy>();
-        PowerUp pUp = go.GetComponent<PowerUp>();
-        if(pUp != null){
-            AbsorbPowerUp(pUp);
-        }
+        Debug.Log("Tank has been hit by an enemy projectile!");
         
+        // Destroy the projectile
+        Destroy(other.gameObject);
+        return;
     }
 
-    public void AbsorbPowerUp(PowerUp pUp){
+    // Handle other collisions (e.g., power-ups)
+    PowerUp pUp = other.GetComponent<PowerUp>();
+    if (pUp != null)
+    {
+        AbsorbPowerUp(pUp);
+    }
+}
+
+
+    void ClampPositionToBounds()
+    {
+        // Get the current position
+        Vector3 currentPosition = transform.position;
+
+        // Clamp the position within the boundaries
+        currentPosition.x = Mathf.Clamp(currentPosition.x, xMin, xMax);
+        currentPosition.z = Mathf.Clamp(currentPosition.z, zMin, zMax);
+
+        // Update the position
+        transform.position = currentPosition;
+    }
+
+    public void AbsorbPowerUp(PowerUp pUp)
+    {
         Debug.Log("Absorbed PowerUp");
-       
         pUp.AbsorbedBy(this.gameObject);
     }
 }
