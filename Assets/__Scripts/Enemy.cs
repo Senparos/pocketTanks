@@ -16,16 +16,15 @@ public class Enemy : MonoBehaviour
 
     private Transform player;
     private Vector3 movementDirection;
+    private Vector3 targetDirection; // Target direction for smooth interpolation
     private float timer;
     private float lastFireTime;
 
     private void Start()
     {
-        // Initialize timer and movement direction
         timer = changeDirectionTime;
         ChooseRandomDirection();
 
-        // Find the player GameObject
         GameObject playerObject = GameObject.Find("Tank_9");
         if (playerObject != null)
         {
@@ -39,98 +38,116 @@ public class Enemy : MonoBehaviour
 
     private void Update()
     {
-        if (player != null && CanSeePlayer())
+        if (player != null && CanSeeTank())
         {
-            TurnTowardsPlayer();
-            ShootAtPlayer();
+            TurnTowardsTank();
+            ShootAtTank();
         }
-        else
-        {
-            Move();
-
-            // Update the timer for changing direction
-            timer -= Time.deltaTime;
-            if (timer <= 0)
-            {
-                timer = changeDirectionTime;
-                ChooseRandomDirection();
-            }
-        }
+        Move();
+        HandleRandomMovement();
     }
 
     private void Move()
     {
-        // Move the enemy in the chosen direction
+        // Gradually interpolate towards the target direction
+        movementDirection = Vector3.Lerp(movementDirection, targetDirection, Time.deltaTime * 2f).normalized;
+
+        // Move the enemy
         transform.position += movementDirection * speed * Time.deltaTime;
 
-        // Keep the enemy within map boundaries
-        transform.position = new Vector3(
-            Mathf.Clamp(transform.position.x, -mapBoundary, mapBoundary),
-            transform.position.y,
-            Mathf.Clamp(transform.position.z, -mapBoundary, mapBoundary)
-        );
+        // Adjust direction if hitting boundaries
+        CheckBoundaries();
+    }
+
+    private void HandleRandomMovement()
+    {
+        timer -= Time.deltaTime;
+        if (timer <= 0)
+        {
+            timer = changeDirectionTime;
+            StartCoroutine(PauseBeforeDirectionChange());
+        }
+    }
+
+    private IEnumerator PauseBeforeDirectionChange()
+    {
+        // Optionally pause before changing direction
+        yield return new WaitForSeconds(0.5f);
+        ChooseRandomDirection();
     }
 
     private void ChooseRandomDirection()
     {
-        // Pick a random direction for the enemy to move
-        movementDirection = new Vector3(Random.Range(-1f, 1f), 0, Random.Range(-1f, 1f)).normalized;
+        targetDirection = new Vector3(Random.Range(-1f, 1f), 0, Random.Range(-1f, 1f)).normalized;
     }
 
-    private bool CanSeePlayer()
+    private void CheckBoundaries()
     {
-        // Check if the player is within detection range
+        Vector3 pos = transform.position;
+
+        // If the enemy hits a boundary, reflect the movement direction
+        if (pos.x <= -mapBoundary || pos.x >= mapBoundary)
+        {
+            targetDirection = new Vector3(-targetDirection.x, 0, targetDirection.z);
+        }
+        if (pos.z <= -mapBoundary || pos.z >= mapBoundary)
+        {
+            targetDirection = new Vector3(targetDirection.x, 0, -targetDirection.z);
+        }
+
+        // Clamp position to stay within boundaries
+        transform.position = new Vector3(
+            Mathf.Clamp(pos.x, -mapBoundary, mapBoundary),
+            pos.y,
+            Mathf.Clamp(pos.z, -mapBoundary, mapBoundary)
+        );
+    }
+
+    private bool CanSeeTank()
+    {
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);
         return distanceToPlayer <= detectionRange;
     }
 
-    private void TurnTowardsPlayer()
+    private void TurnTowardsTank()
     {
-        // Calculate the direction to the player
         Vector3 directionToPlayer = (player.position - transform.position).normalized;
-
-        // Calculate the rotation step
         Quaternion targetRotation = Quaternion.LookRotation(directionToPlayer);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
     }
 
-    private void ShootAtPlayer()
+    private void ShootAtTank()
     {
-        // Shoot if cooldown has passed
         if (Time.time >= lastFireTime + fireCooldown)
         {
             lastFireTime = Time.time;
 
             if (projectilePrefab != null && firePoint != null)
             {
-                // Instantiate and fire the projectile
                 GameObject projectile = Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
                 Rigidbody rb = projectile.GetComponent<Rigidbody>();
                 if (rb != null)
                 {
-                    rb.velocity = firePoint.forward * 10f; // Adjust projectile speed as needed
+                    rb.velocity = firePoint.forward * 10f;
                 }
-                Destroy(projectile, 5f); // Clean up the projectile after 5 seconds
+                Destroy(projectile, 5f);
             }
         }
     }
 
     private void OnCollisionEnter(Collision coll)
     {
-        // Get the GameObject that collided
         GameObject otherGO = coll.gameObject;
 
-        // Check if it is a PlayerProjectile
         PlayerProjectile p = otherGO.GetComponent<PlayerProjectile>();
         if (p != null)
         {
-            // Destroy the enemy and the projectile
             Destroy(this.gameObject);
             Destroy(otherGO);
+            FindObjectOfType<score>().AddScore(10);
         }
         else
         {
-            // Log when colliding with other objects
             Debug.Log("Enemy hit by non-projectile object: " + otherGO.name);
         }
     }

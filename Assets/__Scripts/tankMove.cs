@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class tankMove : MonoBehaviour
 {
@@ -74,25 +75,28 @@ public class tankMove : MonoBehaviour
     }
 
     private void OnTriggerEnter(Collider other)
-{
-    // Check if the collided object is an EnemyProjectile
-    EnemyProjectile enemyProjectile = other.GetComponent<EnemyProjectile>();
-    if (enemyProjectile != null)
     {
-        Debug.Log("Tank has been hit by an enemy projectile!");
-        
-        // Destroy the projectile
-        Destroy(other.gameObject);
-        return;
-    }
+        // Check if the collided object is an EnemyProjectile
+        EnemyProjectile enemyProjectile = other.GetComponent<EnemyProjectile>();
+        if (enemyProjectile != null)
+        {
+            Debug.Log("Tank has been hit by an enemy projectile!");
+            
+            // Destroy the projectile
+            Destroy(other.gameObject);
 
-    // Handle other collisions (e.g., power-ups)
-    PowerUp pUp = other.GetComponent<PowerUp>();
-    if (pUp != null)
-    {
-        AbsorbPowerUp(pUp);
+            // Load the EndScreen scene
+            SceneManager.LoadScene("EndScreen");
+            return;
+        }
+
+        // Handle other collisions (e.g., power-ups)
+        PowerUp pUp = other.GetComponent<PowerUp>();
+        if (pUp != null)
+        {
+            AbsorbPowerUp(pUp);
+        }
     }
-}
 
 
     void ClampPositionToBounds()
